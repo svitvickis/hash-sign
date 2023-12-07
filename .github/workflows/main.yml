@@ -22,13 +22,13 @@ jobs:
         run: |
           docker build --file Dockerfile-local --tag $TAG .
           
-      - name: Login to ghcr.io
+      - name: Login & push image to ghcr.io
         run: |
           echo $PAT | docker login ghcr.io -u $USER --password-stdin
           docker tag $TAG ${{ env.REGISTRY }}/$USER/$TAG:${{ env.VERSION }}
           docker push ${{ env.REGISTRY }}/$USER/$TAG:${{ env.VERSION }}
 
-      - name: Docker Image scan with Trivy
+      - name: Docker image scan with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.REGISTRY }}/${{ env.USER }}/${{ env.TAG }}:${{ env.VERSION }}'
