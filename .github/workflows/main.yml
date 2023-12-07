@@ -1,0 +1,36 @@
+name: Build, push & scan image
+on:
+  push:
+    branches:
+       - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TAG: hash-sign
+      PAT: ${{ secrets.GITHUB_TOKEN }}
+      USER: svitvickis
+      REGISTRY: ghcr.io
+      VERSION: v1
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build an Docker image from Dockerfile
+        run: |
+          docker build --file Dockerfile-local --tag $TAG .
+          
+      - name: Login to ghcr.io
+        run: |
+          echo $PAT | docker login ghcr.io -u $USER --password-stdin
+          docker tag $TAG ${{ env.REGISTRY }}/$USER/$TAG:${{ env.VERSION }}
+          docker push ${{ env.REGISTRY }}/$USER/$TAG:${{ env.VERSION }}
+
+      - name: Docker Image scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.REGISTRY }}/${{ env.USER }}/${{ env.TAG }}:${{ env.VERSION }}'
+          format: 'table'
+          exit-code: '1'
